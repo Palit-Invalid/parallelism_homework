@@ -9,38 +9,28 @@ from legacy_client import get_user_todos_sync
 
 
 class ReportGenerator:
-    CACHE_MAP: dict[UUID, dict[str, Any]] = {}
+    CACHE_MAP: dict[UUID, asyncio.Task] = {}
 
     @classmethod
     def start_generating_report(cls, user_id: int) -> dict:
-        task = asyncio.create_task(asyncio.to_thread(get_user_todos_sync, user_id))
         uuid = uuid4()
-        result = {"job_id": uuid, "status": "running"}
-        cls.CACHE_MAP[uuid] = {"task": task, "result": result}
-        return result
+        cls.CACHE_MAP[uuid] = asyncio.create_task(asyncio.to_thread(get_user_todos_sync, user_id))
+        return {"job_id": uuid, "status": "running"}
 
     @classmethod
     def get_report_by_id(cls, job_id: UUID) -> dict[str, Any] | None:
-        job = cls.CACHE_MAP.get(job_id)
-        if job is None:
+        task = cls.CACHE_MAP.get(job_id)
+        if task is None:
             return None
-
-        task: asyncio.Task = job["task"]
 
         try:
             report = task.result()
         except asyncio.CancelledError:
-            result = {"job_id": job_id, "status": "error"}
-            cls.CACHE_MAP[job_id]["result"] = result
-            return result
+            return {"job_id": job_id, "status": "error"}
         except asyncio.InvalidStateError:
-            result = {"job_id": job_id, "status": "running"}
-            cls.CACHE_MAP[job_id]["result"] = result
-            return result
+            return {"job_id": job_id, "status": "running"}
 
-        result = {"job_id": job_id, "status": "done", "result": report}
-        cls.CACHE_MAP[job_id]["result"] = result
-        return result
+        return {"job_id": job_id, "status": "done", "result": report}
 
 
 app = FastAPI()
