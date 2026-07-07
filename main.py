@@ -29,6 +29,8 @@ class ReportGenerator:
             return {"job_id": job_id, "status": "error"}
         except asyncio.InvalidStateError:
             return {"job_id": job_id, "status": "running"}
+        except Exception:
+            return {"job_id": job_id, "status": "error"}
 
         return {"job_id": job_id, "status": "done", "result": report}
 
