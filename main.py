@@ -38,12 +38,12 @@ class ReportGenerator:
 app = FastAPI()
 
 
-@app.post("/reports/<user_id>")
+@app.post("/reports/{user_id}")
 async def generate_report(user_id: int):
     return ReportGenerator.start_generating_report(user_id)
 
 
-@app.get("/reports/job/<job_id>")
+@app.get("/reports/job/{job_id}")
 async def get_report(job_id: UUID):
     report = ReportGenerator.get_report_by_id(job_id)
     if not report:
