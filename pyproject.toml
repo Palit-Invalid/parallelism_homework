@@ -7,3 +7,6 @@ requires-python = ">=3.13"
 dependencies = [
     "fastapi[standard]>=0.139.0",
 ]
+
+[tool.ty.environment]
+python = ".venv"
