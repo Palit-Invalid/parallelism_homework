@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routes import router
+from app.api.routes import main_router
 from app.add_event_data import add_event_data_to_db
 
 
@@ -23,4 +23,4 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(router)
+app.include_router(main_router)
