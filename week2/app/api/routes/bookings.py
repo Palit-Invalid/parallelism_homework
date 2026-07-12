@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
 from app.api.dependencies import CurrentUserId
-from app.schemas import (
+from app.schemas.base import (
     PaymentCompleted,
     PaymentCreate,
 )

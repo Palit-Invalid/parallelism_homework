@@ -4,7 +4,9 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import engine
-from app.models import Event, EventSeat, Location, Seat
+from app.models.events import Event, EventSeat
+from app.models.locations import Location
+from app.models.seats import Seat
 
 
 async def add_event_data_to_db() -> None:

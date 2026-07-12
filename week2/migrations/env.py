@@ -5,7 +5,7 @@ from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from app.config import DATABASE_URL
-from app.models import Base
+from app.models.base import Base
 
 config = context.config
 config.set_main_option("sqlalchemy.url", DATABASE_URL)
