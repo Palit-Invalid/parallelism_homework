@@ -20,7 +20,11 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="API Афиши", lifespan=lifespan)
+app = FastAPI(
+    title="API Афиши",
+    lifespan=lifespan,
+    swagger_ui_parameters={"displayRequestDuration": True},
+)
 
 app.add_middleware(
     CORSMiddleware,
