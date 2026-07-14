@@ -1,11 +1,15 @@
 import enum
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, ForeignKey
 from sqlalchemy import Enum as SAEnum
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.infrastracture.db.models.base import Base
+
+if TYPE_CHECKING:
+    from src.infrastracture.db.models.events import EventSeat
 
 
 class BookingStatus(str, enum.Enum):
@@ -34,3 +38,5 @@ class Booking(Base):
         index=True,
     )
     reserved_until: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+
+    event_seats: Mapped[list["EventSeat"]] = relationship(back_populates="booking")

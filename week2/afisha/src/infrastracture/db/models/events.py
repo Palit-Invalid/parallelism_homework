@@ -10,6 +10,7 @@ from src.infrastracture.db.models.base import Base
 
 if TYPE_CHECKING:
     from src.infrastracture.db.models.seats import Seat
+    from src.infrastracture.db.models.bookings import Booking
 
 
 class SeatStatus(str, enum.Enum):
@@ -61,3 +62,5 @@ class EventSeat(Base):
     event: Mapped["Event"] = relationship(back_populates="seats")
 
     seat: Mapped["Seat"] = relationship(back_populates="event_seats")
+
+    booking: Mapped["Booking"] = relationship(back_populates="event_seats")

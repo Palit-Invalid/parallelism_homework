@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 
-from src.domain.exceptions import DomainError, ObjectLockedError, SeatsNotAvailable
+from src.domain.exceptions import DomainError, ObjectLockedError, SeatsNotAvailable, ObjectNotFound
 
 DOMAIN_ERROR_RESPONSES: dict[type[DomainError], tuple[int, str]] = {
     ObjectLockedError: (
@@ -11,6 +11,10 @@ DOMAIN_ERROR_RESPONSES: dict[type[DomainError], tuple[int, str]] = {
     SeatsNotAvailable: (
         status.HTTP_409_CONFLICT,
         "Some seats alrady not available",
+    ),
+    ObjectNotFound: (
+        status.HTTP_404_NOT_FOUND,
+        "Object not found",
     ),
 }
 

@@ -4,6 +4,8 @@ from src.api.dependencies import CurrentUserId
 from src.schemas.events import EventCreate, EventRead
 from src.schemas.base import EventDashboard
 
+from src.api.dependencies import OrganizerServiceDep
+
 
 router = APIRouter(prefix="/organizer")
 
@@ -21,8 +23,10 @@ async def create_event(payload: EventCreate, organizer_id: CurrentUserId) -> Eve
 
 
 @router.get("/events/{event_id}/dashboard")
-async def get_event_dashboard(event_id: int, organizer_id: CurrentUserId) -> EventDashboard:
+async def get_event_dashboard(
+    event_id: int, organizer_id: CurrentUserId, organizer_service: OrganizerServiceDep
+) -> EventDashboard:
     """Возвращает аналитические данные для дашборда по мероприятию."""
     # TODO: проверить, что мероприятие принадлежит organizer_id.
     # TODO: конкурентно загрузить аналитику продаж и занятость мест отдельными запросами к БД.
-    ...
+    return await organizer_service.get_dashboard(event_id=event_id, organizer_id=organizer_id)

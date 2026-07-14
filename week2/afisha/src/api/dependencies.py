@@ -7,6 +7,7 @@ from src.infrastracture.api_connectors.payment import PaymentConnector
 from src.infrastracture.api_connectors.protection import ProtectionConnector
 from src.infrastracture.db.manager import DBManager, session_maker
 from src.services.events import EventsService
+from src.services.organizers import OrganizerService
 
 
 def get_current_user_id(x_user_id: Annotated[int, Header()]) -> int:
@@ -51,3 +52,10 @@ def get_events_service(
 
 
 EventsServiceDep = Annotated[EventsService, Depends(get_events_service)]
+
+
+def get_organizer_service(db: DBDep) -> OrganizerService:
+    return OrganizerService(db)
+
+
+OrganizerServiceDep = Annotated[OrganizerService, Depends(get_organizer_service)]
