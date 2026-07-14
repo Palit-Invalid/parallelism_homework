@@ -5,3 +5,16 @@ docker compose up -d db payment-api protection-api
 ```
 
 База будет доступна на порту `7432`, API платежей (`payment`) на `9001`, API страховки (`protection`) на `9002`.
+
+Накатить миграции:
+
+```bash
+cd afisha
+uv run alembic upgrade head
+```
+
+Запустить приложение:
+
+```bash
+uv run uvicorn src.main:app
+```
