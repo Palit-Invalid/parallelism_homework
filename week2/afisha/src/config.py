@@ -1,8 +1,8 @@
-from pydantic import SecretStr
+from pydantic import SecretStr, BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class DatabaseConfig(BaseSettings):
+class DatabaseConfig(BaseModel):
     host: str = "localhost"
     port: int = 7432
     user: str = "postgres"

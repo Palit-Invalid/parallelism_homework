@@ -1,12 +1,16 @@
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 
-from src.domain.exceptions import DomainError, ObjectLockedError
+from src.domain.exceptions import DomainError, ObjectLockedError, SeatsNotAvailable
 
 DOMAIN_ERROR_RESPONSES: dict[type[DomainError], tuple[int, str]] = {
     ObjectLockedError: (
         status.HTTP_409_CONFLICT,
         "Object is being already processed",
+    ),
+    SeatsNotAvailable: (
+        status.HTTP_409_CONFLICT,
+        "Some seats alrady not available",
     ),
 }
 

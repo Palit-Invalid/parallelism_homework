@@ -5,7 +5,7 @@ from src.api.routes.events import router as events_router
 from src.api.routes.locations import router as locations_router
 from src.api.routes.organizer import router as organizer_router
 
-__all__ = ("main_router")
+__all__ = "main_router"
 
 
 main_router = APIRouter()

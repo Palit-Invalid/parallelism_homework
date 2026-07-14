@@ -19,6 +19,20 @@ class EventSeatCreate(BaseModel):
     booking_id: int | None
 
 
+class EventSeatEdit(BaseModel):
+    event_id: int | None = None
+    seat_id: int | None = None
+    sector: str | None = None
+    row: str | None = None
+    number: int | None = None
+    x: int | None = None
+    y: int | None = None
+    price: int | None = None
+    status: SeatStatus | None = None
+    reserved_until: datetime | None = None
+    booking_id: int | None = None
+
+
 class EventSeatRead(BaseModel):
     id: int
     event_id: int
@@ -27,12 +41,6 @@ class EventSeatRead(BaseModel):
     status: SeatStatus
     reserved_until: datetime | None
     booking_id: int | None
-
-
-class EventSeatEdit(BaseModel):
-    price: int | None = None
-    status: SeatStatus | None = None
-    reserved_until: datetime | None = None
 
 
 class EventCreate(BaseModel):
@@ -48,3 +56,19 @@ class EventCreate(BaseModel):
 class EventRead(EventCreate):
     model_config = ConfigDict(from_attributes=True)
     id: int
+
+
+class EventWithSeats(BaseModel):
+    id: int
+    organizer_id: int
+    location_id: int
+    title: str
+    description: str
+    category: str
+    starts_at: datetime
+    base_price: int
+    seats: list[EventSeatRead]
+
+
+class EventSeatWithEvent(EventSeatRead):
+    event: EventRead

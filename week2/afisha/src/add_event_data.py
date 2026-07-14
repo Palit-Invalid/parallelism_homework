@@ -50,10 +50,7 @@ async def add_event_data_to_db() -> None:
             db.add(event)
             await db.flush()
 
-            db.add_all(
-                EventSeat(event_id=event.id, seat_id=seat.id, price=event.base_price)
-                for seat in seats
-            )
+            db.add_all(EventSeat(event_id=event.id, seat_id=seat.id, price=event.base_price) for seat in seats)
 
     print("Тестовые данные созданы")
 

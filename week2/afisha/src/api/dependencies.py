@@ -2,6 +2,9 @@ from typing import Annotated
 
 from fastapi import Depends, Header
 
+from src.config import config
+from src.infrastracture.api_connectors.payment import PaymentConnector
+from src.infrastracture.api_connectors.protection import ProtectionConnector
 from src.infrastracture.db.manager import DBManager, session_maker
 from src.services.events import EventsService
 
@@ -21,7 +24,30 @@ async def get_db():
 DBDep = Annotated[DBManager, Depends(get_db)]
 
 
-def get_events_service(db: DBDep) -> EventsService:
-    return EventsService(db)
+def get_payment_connector() -> PaymentConnector:
+    return PaymentConnector(base_url=config.PAYMENT_API_URL)
+
+
+PaymentConnectorDep = Annotated[PaymentConnector, Depends(get_payment_connector)]
+
+
+def get_protection_connector() -> ProtectionConnector:
+    return ProtectionConnector(base_url=config.PROTECTION_API_URL)
+
+
+ProtectionConnectorDep = Annotated[ProtectionConnector, Depends(get_protection_connector)]
+
+
+def get_events_service(
+    db: DBDep,
+    payment_connector: PaymentConnectorDep,
+    protection_connector: ProtectionConnectorDep,
+) -> EventsService:
+    return EventsService(
+        db,
+        payment_connector=payment_connector,
+        protection_connector=protection_connector,
+    )
+
 
 EventsServiceDep = Annotated[EventsService, Depends(get_events_service)]

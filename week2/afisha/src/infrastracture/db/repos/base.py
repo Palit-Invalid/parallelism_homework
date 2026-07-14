@@ -7,6 +7,7 @@ from src.domain.exceptions import ObjectLockedError
 from src.infrastracture.db.models.base import Base
 from src.log import logger
 
+
 class BaseRepository[
     ReadModelT: BaseModel,
     CreateModelT: BaseModel,
@@ -29,11 +30,7 @@ class BaseRepository[
         await self.session.execute(stmt)
 
     async def edit(self, data: EditModelT, *filter) -> int:
-        stmt = (
-            update(self.model)
-            .values(**data.model_dump(exclude_unset=True))
-            .filter(*filter)
-        )
+        stmt = update(self.model).values(**data.model_dump(exclude_unset=True)).filter(*filter)
         result = await self.session.execute(stmt)
         return result.rowcount
 
@@ -42,17 +39,17 @@ class BaseRepository[
         result = await self.session.execute(stmt)
         return result.rowcount
 
-    async def get_one(self, for_update: bool = False, *filter) -> ReadModelT:
+    async def get_one(self, *filter, for_update: bool = False) -> ReadModelT:
         query = select(self.model).filter(*filter)
         if for_update:
-            query.with_for_update()
+            query = query.with_for_update()
         result = await self.session.execute(query)
         model = result.scalar_one()
         return self.schema.model_validate(model, from_attributes=True)
 
-    async def get_filtered(self, *filter, lock: bool = False) -> list[ReadModelT]:
+    async def get_filtered(self, *filter, for_update: bool = False) -> list[ReadModelT]:
         query = select(self.model).filter(*filter)
-        if lock:
+        if for_update:
             query = query.with_for_update(nowait=True)
 
         try:
@@ -61,10 +58,8 @@ class BaseRepository[
             if not exc.orig:
                 raise exc
             if isinstance(exc.orig.__cause__, LockNotAvailableError):
-                logger.debug('Unable to get data from database because its locked')
+                logger.debug("Unable to get data from database because its locked")
                 raise ObjectLockedError
 
         models = result.scalars().all()
-        return [
-            self.schema.model_validate(model, from_attributes=True) for model in models
-        ]
+        return [self.schema.model_validate(model, from_attributes=True) for model in models]

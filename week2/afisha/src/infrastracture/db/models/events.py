@@ -1,11 +1,15 @@
 import enum
 from datetime import datetime
-
+from typing import TYPE_CHECKING
 from sqlalchemy import DateTime, ForeignKey, UniqueConstraint
 from sqlalchemy import Enum as SAEnum
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.infrastracture.db.models.base import Base
+
+
+if TYPE_CHECKING:
+    from src.infrastracture.db.models.seats import Seat
 
 
 class SeatStatus(str, enum.Enum):
@@ -29,6 +33,8 @@ class Event(Base):
     starts_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
     base_price: Mapped[int]
 
+    seats: Mapped[list["EventSeat"]] = relationship(back_populates="event", cascade="all, delete-orphan")
+
 
 class EventSeat(Base):
     """Место конкретного мероприятия с ценой и статусом."""
@@ -51,3 +57,7 @@ class EventSeat(Base):
         ForeignKey("bookings.id"),
         index=True,
     )
+
+    event: Mapped["Event"] = relationship(back_populates="seats")
+
+    seat: Mapped["Seat"] = relationship(back_populates="event_seats")
