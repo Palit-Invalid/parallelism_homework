@@ -1,7 +1,8 @@
-from pydantic import BaseModel
 from datetime import datetime
+
+from pydantic import BaseModel
+
 from src.infrastracture.api_connectors.base import BaseHTTPConnector
-from src.log import logger
 
 
 class ProtectionCalculateResponse(BaseModel):
