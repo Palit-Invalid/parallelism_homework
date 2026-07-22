@@ -26,6 +26,7 @@ class DatabaseConfig(BaseModel):
 class Config(BaseSettings):
     PAYMENT_API_URL: str = "http://localhost:9001"
     PROTECTION_API_URL: str = "http://localhost:9002"
+    REDIS_URL: str = "redis://localhost:7379/0"
     BOOKING_TTL_MINUTES: int = 15
 
     db: DatabaseConfig = DatabaseConfig()
