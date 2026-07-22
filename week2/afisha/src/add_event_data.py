@@ -3,8 +3,8 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db import engine
-from app.models import Event, EventSeat, Location, Seat
+from src.infrastracture.db.manager import engine
+from src.infrastracture.db.models import Event, EventSeat, Location, Seat
 
 
 async def add_event_data_to_db() -> None:
@@ -50,10 +50,7 @@ async def add_event_data_to_db() -> None:
             db.add(event)
             await db.flush()
 
-            db.add_all(
-                EventSeat(event_id=event.id, seat_id=seat.id, price=event.base_price)
-                for seat in seats
-            )
+            db.add_all(EventSeat(event_id=event.id, seat_id=seat.id, price=event.base_price) for seat in seats)
 
     print("Тестовые данные созданы")
 

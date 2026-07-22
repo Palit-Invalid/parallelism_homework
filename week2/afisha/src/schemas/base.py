@@ -1,72 +1,9 @@
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel
 
-from app.models import BookingStatus, SeatStatus
-
-
-class LocationRead(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-    id: int
-    name: str
-    city: str
-    address: str
-
-
-class SeatRead(BaseModel):
-    id: int
-    location_id: int
-    sector: str
-    row: str
-    number: int
-    x: int
-    y: int
-
-
-class LocationDetail(BaseModel):
-    location: LocationRead
-    seats: list[SeatRead]
-
-
-class EventCreate(BaseModel):
-    location_id: int
-    title: str = Field(min_length=1, max_length=255)
-    description: str | None = Field(default=None, max_length=2000)
-    category: str = Field(min_length=1, max_length=100)
-    starts_at: datetime
-    base_price: int = Field(gt=0)
-
-
-class EventRead(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-    id: int
-    organizer_id: int
-    location_id: int
-    title: str
-    description: str | None
-    category: str
-    starts_at: datetime
-    base_price: int
-
-
-class EventSeatRead(BaseModel):
-    id: int
-    event_id: int
-    seat_id: int
-    sector: str
-    row: str
-    number: int
-    x: int
-    y: int
-    price: int
-    status: SeatStatus
-    reserved_until: datetime | None
-    booking_id: int | None
-
-
-class BookingCreate(BaseModel):
-    seat_ids: list[int] = Field(min_length=1)
+from src.infrastracture.db.models.bookings import BookingStatus
 
 
 class SalesDashboard(BaseModel):
