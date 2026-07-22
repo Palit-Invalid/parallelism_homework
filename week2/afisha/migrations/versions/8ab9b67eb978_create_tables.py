@@ -142,3 +142,6 @@ def downgrade() -> None:
     op.drop_index(op.f("ix_events_location_id"), table_name="events")
     op.drop_table("events")
     op.drop_table("locations")
+
+    sa.Enum("pending_payment", "paid", "cancelled", "expired", name="booking_status").drop(op.get_bind())
+    sa.Enum("available", "reserved", "sold", name="seat_status").drop(op.get_bind())
