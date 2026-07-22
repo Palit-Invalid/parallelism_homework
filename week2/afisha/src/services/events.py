@@ -19,19 +19,22 @@ from src.schemas.bookings import (
     BookingReadDB,
     BookingStatus,
 )
-from src.schemas.events import EventRead, EventSeatEdit, EventSeatRead, SeatStatus
+from src.schemas.events import EventRead, EventSeatEdit, SeatStatus
 from src.schemas.seats import SeatRead
 from src.services.base import BaseService
+from src.infrastracture.redis.manager import RedisManager
 
 
 class EventsService(BaseService):
     def __init__(
         self,
         db: DBManager,
+        redis: RedisManager,
         payment_connector: PaymentConnector,
         protection_connector: ProtectionConnector,
     ) -> None:
         self.db = db
+        self.redis = redis
         self.payment_connector = payment_connector
         self.protection_connector = protection_connector
 
@@ -79,7 +82,6 @@ class EventsService(BaseService):
             await db.bookings.edit(data, Booking.id == booking_id)
 
     async def prepare_checkout(self, user_id: int, event_id: int, seat_ids: list[int]) -> CheckoutResponse:
-
         event_seats = await self.db.event_seats.get_filtered(
             EventSeat.event_id == event_id,
             EventSeat.seat_id.in_(seat_ids),
@@ -187,3 +189,39 @@ class EventsService(BaseService):
             ),
             protection=protection,
         )
+
+    async def get_event(self, event_id: int) -> EventRead:
+        event = await self._get_event_from_cache(event_id=event_id)
+
+        if event is not None:
+            logger.debug("Return event data from cache: %s", event)
+            return event
+
+        logger.debug("No event data in cache. Entering into critical section...")
+        async with self.redis.client.lock(
+            name=f"locks:events:info:{event_id}",
+            timeout=5,
+            blocking_timeout=3,
+        ):
+            logger.debug("Trying to get data from cache again because it can be saved by another worker")
+            event = await self._get_event_from_cache(event_id=event_id)
+            if event is not None:
+                logger.debug("Found saved event data from another worker: %s", event)
+                return event
+
+            logger.debug("No data in cache again. Trying to get it from database...")
+            event = await self.db.events.get_one(Event.id == event_id)
+            await self.redis.client.set(
+                name=f"events:info:{event_id}",
+                value=event.model_dump_json(),
+                ex=5,
+            )
+            logger.debug("Got from database and saved event data into cache: %s", event)
+            return event
+
+    async def _get_event_from_cache(self, event_id: int) -> EventRead | None:
+        result = await self.redis.client.get(f"events:info:{event_id}")
+        if result is None:
+            return None
+
+        return EventRead.model_validate_json(result)

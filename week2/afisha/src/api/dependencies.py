@@ -1,11 +1,13 @@
 from typing import Annotated
 
 from fastapi import Depends, Header
+from redis.asyncio import Redis
 
 from src.config import config
 from src.infrastracture.api_connectors.payment import PaymentConnector
 from src.infrastracture.api_connectors.protection import ProtectionConnector
 from src.infrastracture.db.manager import DBManager, session_maker
+from src.infrastracture.redis.manager import RedisManager
 from src.services.events import EventsService
 from src.services.organizers import OrganizerService
 
@@ -39,13 +41,27 @@ def get_protection_connector() -> ProtectionConnector:
 ProtectionConnectorDep = Annotated[ProtectionConnector, Depends(get_protection_connector)]
 
 
+def get_redis_manager() -> RedisManager:
+    redis = Redis.from_url(
+        config.REDIS_URL,
+        decode_responses=True,
+    )
+
+    return RedisManager(redis)
+
+
+RedisDep = Annotated[RedisManager, Depends(get_redis_manager)]
+
+
 def get_events_service(
     db: DBDep,
+    redis: RedisDep,
     payment_connector: PaymentConnectorDep,
     protection_connector: ProtectionConnectorDep,
 ) -> EventsService:
     return EventsService(
         db,
+        redis,
         payment_connector=payment_connector,
         protection_connector=protection_connector,
     )
