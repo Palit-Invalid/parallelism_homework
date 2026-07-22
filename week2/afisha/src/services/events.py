@@ -23,6 +23,7 @@ from src.schemas.bookings import (
 from src.schemas.events import EventRead, EventSeatEdit, SeatStatus
 from src.schemas.seats import SeatRead
 from src.services.base import BaseService
+from src.infrastracture.db.event_view import EventViewCounter
 
 
 class EventsService(BaseService):
@@ -32,11 +33,13 @@ class EventsService(BaseService):
         redis: RedisManager,
         payment_connector: PaymentConnector,
         protection_connector: ProtectionConnector,
+        event_view_counter: EventViewCounter
     ) -> None:
         self.db = db
         self.redis = redis
         self.payment_connector = payment_connector
         self.protection_connector = protection_connector
+        self.event_view_count = event_view_counter
 
     async def _get_event_for_checkout(self, event_id: int) -> EventRead:
         async with self.db.transaction() as db:
@@ -190,7 +193,10 @@ class EventsService(BaseService):
             protection=protection,
         )
 
-    async def get_event(self, event_id: int) -> EventRead:
+    async def get_event(self, event_id: int, user_address: str | None = None) -> EventRead:
+        if user_address:
+            await self.event_view_count.add_event_view(event_id=event_id, address=user_address)
+
         event = await self._get_event_from_cache(event_id=event_id)
 
         if event is not None:

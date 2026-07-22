@@ -12,12 +12,22 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from src.add_event_data import add_event_data_to_db
 from src.api.exceptions import setup_exception_handlers
 from src.api.routes import main_router
+from src.infrastracture.db.event_view import EventViewCounter
+from src.infrastracture.db.manager import DBManager, session_maker
+from src.init import redis_manager
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await add_event_data_to_db()
-    yield
+
+    async with DBManager(session_maker=session_maker) as db:
+        app.state.event_views_counter = EventViewCounter(db, redis_manager)
+        await app.state.event_views_counter.start()
+
+        yield
+
+        await app.state.event_views_counter.stop()
 
 
 app = FastAPI(

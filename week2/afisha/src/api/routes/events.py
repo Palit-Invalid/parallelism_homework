@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from src.api.dependencies import CurrentUserId, EventsServiceDep
+from src.api.dependencies import CurrentUserId, EventsServiceDep, UserAddressDep
 from src.schemas.bookings import BookingCreate
 from src.schemas.events import EventRead, EventSeatRead
 from src.schemas.base import CheckoutResponse
@@ -15,9 +15,9 @@ async def list_events() -> list[EventRead]:
 
 
 @router.get("/{event_id}")
-async def get_event(event_service: EventsServiceDep, event_id: int) -> EventRead:
+async def get_event(event_service: EventsServiceDep, event_id: int, user_address: UserAddressDep) -> EventRead:
     """Возвращает описание мероприятия."""
-    return await event_service.get_event(event_id=event_id)
+    return await event_service.get_event(event_id=event_id, user_address=user_address)
 
 
 @router.get("/{event_id}/seats")
