@@ -6,6 +6,7 @@ from src.infrastracture.api_connectors.payment import PaymentConnector
 from src.infrastracture.api_connectors.protection import ProtectionConnector
 from src.infrastracture.db.manager import DBManager
 from src.infrastracture.db.models import Booking, Event, EventSeat, Seat
+from src.infrastracture.redis.manager import RedisManager
 from src.log import logger
 from src.schemas.base import (
     CheckoutBooking,
@@ -22,7 +23,6 @@ from src.schemas.bookings import (
 from src.schemas.events import EventRead, EventSeatEdit, SeatStatus
 from src.schemas.seats import SeatRead
 from src.services.base import BaseService
-from src.infrastracture.redis.manager import RedisManager
 
 
 class EventsService(BaseService):
@@ -211,10 +211,10 @@ class EventsService(BaseService):
 
             logger.debug("No data in cache again. Trying to get it from database...")
             event = await self.db.events.get_one(Event.id == event_id)
-            await self.redis.client.set(
+            await self.redis.set(
                 name=f"events:info:{event_id}",
                 value=event.model_dump_json(),
-                ex=5,
+                ex=10,
             )
             logger.debug("Got from database and saved event data into cache: %s", event)
             return event
