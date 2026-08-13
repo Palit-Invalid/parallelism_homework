@@ -1,15 +1,13 @@
-from sqlalchemy import func, select
-from sqlalchemy.orm import selectinload
 from tenacity import retry, stop_after_attempt, wait_exponential_jitter
 
-from src.infrastracture.api_connectors.protection import ProtectionConnector, ProtectionCalculateResponse
+from src.infrastracture.api_connectors.protection import ProtectionCalculateResponse, ProtectionConnector
 from src.infrastracture.db.manager import DBManager
 from src.infrastracture.db.models import Booking, EventSeat
 from src.infrastracture.db.models.bookings import BookingStatus
 from src.infrastracture.db.models.events import SeatStatus
 from src.log import logger
 from src.schemas.bookings import BookingEditDB
-from src.schemas.events import EventSeatEdit, EventSeatReadWithBooking
+from src.schemas.events import EventSeatEdit
 from src.services.base import BaseService
 
 
@@ -19,7 +17,7 @@ class BookingService(BaseService):
         self.protection_connector = protection_connector
 
     async def delete_overdue_bookings(self) -> None:
-        overdue_event_seats = await self._get_overdue()
+        overdue_event_seats = await self.db.event_seats.get_overdue()
 
         logger.debug("OVERDUE EVENT SEATS: %s", overdue_event_seats)
 
@@ -35,24 +33,6 @@ class BookingService(BaseService):
         )
 
         await self.db.commit()
-
-    async def _get_overdue(self) -> list[EventSeatReadWithBooking]:
-        query = (
-            select(EventSeat)
-            .join(EventSeat.booking)
-            .filter(
-                Booking.status == BookingStatus.pending_payment,
-                Booking.reserved_until < func.now(),
-            )
-            .options(selectinload(EventSeat.booking))
-            .with_for_update(nowait=True)
-        )
-
-        result = await self.db.session.execute(query)
-
-        models = result.scalars().all()
-
-        return [EventSeatReadWithBooking.model_validate(model, from_attributes=True) for model in models]
 
     async def add_protection(self, booking_id: int, ticket_amount: int, event_category: str):
         @retry(stop=stop_after_attempt(2), wait=wait_exponential_jitter(1))

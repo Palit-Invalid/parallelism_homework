@@ -1,4 +1,5 @@
 from sqlalchemy import func, select
+from sqlalchemy.orm import selectinload
 
 from src.infrastracture.db.models import Booking, Event, EventSeat
 from src.infrastracture.db.models.bookings import BookingStatus
@@ -9,6 +10,7 @@ from src.schemas.events import (
     EventSeatCreate,
     EventSeatEdit,
     EventSeatRead,
+    EventSeatReadWithBooking,
 )
 
 
@@ -65,3 +67,21 @@ class EventSeatsRepository(BaseRepository[EventSeatRead, EventSeatCreate, EventS
             sold=result[3],
             occupancy_percent=(result[2] + result[3]) / result[0] * 100,
         )
+
+    async def get_overdue(self) -> list[EventSeatReadWithBooking]:
+        query = (
+            select(EventSeat)
+            .join(EventSeat.booking)
+            .filter(
+                Booking.status == BookingStatus.pending_payment,
+                Booking.reserved_until < func.now(),
+            )
+            .options(selectinload(EventSeat.booking))
+            .with_for_update(nowait=True)
+        )
+
+        result = await self.session.execute(query)
+
+        models = result.scalars().all()
+
+        return [EventSeatReadWithBooking.model_validate(model, from_attributes=True) for model in models]
