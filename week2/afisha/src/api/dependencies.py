@@ -1,3 +1,4 @@
+from functools import cache
 from typing import Annotated
 
 from fastapi import Depends, Header, Request
@@ -42,6 +43,7 @@ def get_protection_connector() -> ProtectionConnector:
 ProtectionConnectorDep = Annotated[ProtectionConnector, Depends(get_protection_connector)]
 
 
+@cache
 def get_redis_manager() -> RedisManager:
     redis = Redis.from_url(
         config.REDIS_URL,
