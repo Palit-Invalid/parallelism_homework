@@ -18,3 +18,9 @@ uv run alembic upgrade head
 ```bash
 uv run uvicorn src.main:app
 ```
+
+Запустить воркер:
+
+```bash
+uv run taskiq worker src.infrastracture.tasks.app:broker_sync src.infrastracture.tasks.tasks
+```
