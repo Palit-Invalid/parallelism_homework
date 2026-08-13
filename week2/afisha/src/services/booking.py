@@ -64,9 +64,6 @@ class BookingService(BaseService):
         protection_data = await calculate_protection()
         logger.debug("PROTECTION DATA: %s", protection_data)
 
-        if not protection_data:
-            return
-
         booking = await self.db.bookings.get_one_or_none(
             Booking.id == booking_id,
             Booking.status == BookingStatus.pending_payment,
