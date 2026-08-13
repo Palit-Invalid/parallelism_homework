@@ -6,6 +6,7 @@ from src.infrastracture.api_connectors.payment import PaymentConnector
 from src.infrastracture.api_connectors.protection import ProtectionConnector
 from src.infrastracture.db.manager import DBManager
 from src.infrastracture.db.models import Booking, Event, EventSeat, Seat
+from src.infrastracture.redis.manager import RedisManager
 from src.log import logger
 from src.schemas.base import (
     CheckoutBooking,
@@ -19,21 +20,26 @@ from src.schemas.bookings import (
     BookingReadDB,
     BookingStatus,
 )
-from src.schemas.events import EventRead, EventSeatEdit, EventSeatRead, SeatStatus
+from src.schemas.events import EventRead, EventSeatEdit, SeatStatus
 from src.schemas.seats import SeatRead
 from src.services.base import BaseService
+from src.infrastracture.db.event_view import EventViewCounter
 
 
 class EventsService(BaseService):
     def __init__(
         self,
         db: DBManager,
+        redis: RedisManager,
         payment_connector: PaymentConnector,
         protection_connector: ProtectionConnector,
+        event_view_counter: EventViewCounter
     ) -> None:
         self.db = db
+        self.redis = redis
         self.payment_connector = payment_connector
         self.protection_connector = protection_connector
+        self.event_view_count = event_view_counter
 
     async def _get_event_for_checkout(self, event_id: int) -> EventRead:
         async with self.db.transaction() as db:
@@ -79,7 +85,6 @@ class EventsService(BaseService):
             await db.bookings.edit(data, Booking.id == booking_id)
 
     async def prepare_checkout(self, user_id: int, event_id: int, seat_ids: list[int]) -> CheckoutResponse:
-
         event_seats = await self.db.event_seats.get_filtered(
             EventSeat.event_id == event_id,
             EventSeat.seat_id.in_(seat_ids),
@@ -187,3 +192,42 @@ class EventsService(BaseService):
             ),
             protection=protection,
         )
+
+    async def get_event(self, event_id: int, user_address: str | None = None) -> EventRead:
+        if user_address:
+            await self.event_view_count.add_event_view(event_id=event_id, address=user_address)
+
+        event = await self._get_event_from_cache(event_id=event_id)
+
+        if event is not None:
+            logger.debug("Return event data from cache: %s", event)
+            return event
+
+        logger.debug("No event data in cache. Entering into critical section...")
+        async with self.redis.client.lock(
+            name=f"locks:events:info:{event_id}",
+            timeout=5,
+            blocking_timeout=3,
+        ):
+            logger.debug("Trying to get data from cache again because it can be saved by another worker")
+            event = await self._get_event_from_cache(event_id=event_id)
+            if event is not None:
+                logger.debug("Found saved event data from another worker: %s", event)
+                return event
+
+            logger.debug("No data in cache again. Trying to get it from database...")
+            event = await self.db.events.get_one(Event.id == event_id)
+            await self.redis.set(
+                name=f"events:info:{event_id}",
+                value=event.model_dump_json(),
+                ex=10,
+            )
+            logger.debug("Got from database and saved event data into cache: %s", event)
+            return event
+
+    async def _get_event_from_cache(self, event_id: int) -> EventRead | None:
+        result = await self.redis.client.get(f"events:info:{event_id}")
+        if result is None:
+            return None
+
+        return EventRead.model_validate_json(result)

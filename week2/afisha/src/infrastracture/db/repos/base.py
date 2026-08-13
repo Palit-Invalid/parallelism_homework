@@ -1,9 +1,9 @@
 from asyncpg import LockNotAvailableError
-from sqlalchemy.exc import DBAPIError
+from sqlalchemy.exc import DBAPIError, NoResultFound
 from pydantic import BaseModel
 from sqlalchemy import delete, insert, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.domain.exceptions import ObjectLockedError
+from src.domain.exceptions import ObjectLockedError, ObjectNotFound
 from src.infrastracture.db.models.base import Base
 from src.log import logger
 
@@ -44,7 +44,10 @@ class BaseRepository[
         if for_update:
             query = query.with_for_update()
         result = await self.session.execute(query)
-        model = result.scalar_one()
+        try:
+            model = result.scalar_one()
+        except NoResultFound:
+            raise ObjectNotFound
         return self.schema.model_validate(model, from_attributes=True)
 
     async def get_filtered(self, *filter, for_update: bool = False) -> list[ReadModelT]:

@@ -9,6 +9,7 @@ from src.infrastracture.db.repos import (
     BookingsRepository,
     EventSeatsRepository,
     EventsRepository,
+    EventViewsRepository,
     SeatsRepository,
 )
 
@@ -59,6 +60,10 @@ class DBManager:
     @property
     def events(self) -> EventsRepository:
         return EventsRepository(self.session)
+
+    @property
+    def event_views(self) -> EventViewsRepository:
+        return EventViewsRepository(self.session)
 
     @property
     def seats(self) -> SeatsRepository:
