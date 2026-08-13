@@ -10,7 +10,6 @@ from src.infrastracture.api_connectors.protection import ProtectionConnector
 from src.infrastracture.db.event_view import EventViewCounter
 from src.infrastracture.db.manager import DBManager, session_maker
 from src.infrastracture.redis.manager import RedisManager
-from src.services.booking import BookingService
 from src.services.events import EventsService
 from src.services.organizers import OrganizerService
 

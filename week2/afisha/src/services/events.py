@@ -4,9 +4,11 @@ from datetime import datetime, timezone
 from src.domain.exceptions import SeatsNotAvailable
 from src.infrastracture.api_connectors.payment import PaymentConnector
 from src.infrastracture.api_connectors.protection import ProtectionConnector
+from src.infrastracture.db.event_view import EventViewCounter
 from src.infrastracture.db.manager import DBManager
 from src.infrastracture.db.models import Booking, Event, EventSeat, Seat
 from src.infrastracture.redis.manager import RedisManager
+from src.infrastracture.tasks.tasks import get_protection_after_fail
 from src.log import logger
 from src.schemas.base import (
     CheckoutBooking,
@@ -23,7 +25,6 @@ from src.schemas.bookings import (
 from src.schemas.events import EventRead, EventSeatEdit, SeatStatus
 from src.schemas.seats import SeatRead
 from src.services.base import BaseService
-from src.infrastracture.db.event_view import EventViewCounter
 
 
 class EventsService(BaseService):
@@ -33,7 +34,7 @@ class EventsService(BaseService):
         redis: RedisManager,
         payment_connector: PaymentConnector,
         protection_connector: ProtectionConnector,
-        event_view_counter: EventViewCounter
+        event_view_counter: EventViewCounter,
     ) -> None:
         self.db = db
         self.redis = redis
@@ -151,6 +152,12 @@ class EventsService(BaseService):
             protection_price = 0
             with_protection = False
             protection = None
+
+            await get_protection_after_fail.kiq(
+                booking_id=booking.id,
+                ticket_amount=event.base_price,
+                event_category=event.category,
+            )
         else:
             protection_price = protection_data.price
             with_protection = True
