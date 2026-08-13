@@ -1,9 +1,9 @@
 import asyncio
 
-
 from src.infrastracture.db.manager import DBManager
 from src.infrastracture.redis.manager import RedisManager
 from src.log import logger
+from src.schemas.event_views import EventViewRead
 
 
 class EventViewCounter:
@@ -57,7 +57,10 @@ class EventViewCounter:
                 views = {}
 
     async def _update_views_in_db(self, views: dict):
-        for event_id, views_count in views.items():
-            await self.db.event_views.add_views(event_id=event_id, views_count=views_count)
+        views_data = [
+            EventViewRead(event_id=event_id, views_count=views_count) for event_id, views_count in views.items()
+        ]
+
+        await self.db.event_views.add_views_bulk(views_data=views_data)
 
         await self.db.commit()
