@@ -19,8 +19,20 @@ uv run alembic upgrade head
 uv run uvicorn src.main:app
 ```
 
-Запустить воркер:
+Запустить планировщик:
+
+```bash
+uv run taskiq scheduler src.infrastracture.tasks.app:scheduler src.infrastracture.tasks.tasks --log-level INFO
+```
+
+Запустить синхронный воркер:
 
 ```bash
 uv run taskiq worker src.infrastracture.tasks.app:broker_sync src.infrastracture.tasks.tasks
+```
+
+Запустить асинхронный воркер:
+
+```bash
+uv run taskiq worker src.infrastracture.tasks.app:broker_async src.infrastracture.tasks.tasks
 ```

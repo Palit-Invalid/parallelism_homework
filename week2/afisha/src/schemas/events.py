@@ -3,6 +3,7 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
 
 from src.infrastracture.db.models.events import SeatStatus
+from src.schemas.bookings import BookingReadDB
 
 
 class EventSeatCreate(BaseModel):
@@ -41,6 +42,10 @@ class EventSeatRead(BaseModel):
     status: SeatStatus
     reserved_until: datetime | None
     booking_id: int | None
+
+
+class EventSeatReadWithBooking(EventSeatRead):
+    booking: BookingReadDB
 
 
 class EventCreate(BaseModel):
