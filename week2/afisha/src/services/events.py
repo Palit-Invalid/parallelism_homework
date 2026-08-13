@@ -108,12 +108,6 @@ class EventsService(BaseService):
         if len(seat_ids) != len(event_seats):
             raise SeatsNotAvailable
 
-        await self.db.event_seats.edit(
-            EventSeatEdit(status=SeatStatus.reserved),
-            EventSeat.seat_id.in_(seat_ids),
-        )
-        logger.debug("Reserve event_seats with ids: %s", seat_ids)
-
         # Create dummy booking to get its ID
         booking_data = BookingCreateDB(
             event_id=event_id,
@@ -125,6 +119,12 @@ class EventsService(BaseService):
             reserved_until=datetime.now(tz=timezone.utc),
         )
         booking = await self.db.bookings.add_one(data=booking_data)
+
+        await self.db.event_seats.edit(
+            EventSeatEdit(booking_id=booking.id, status=SeatStatus.reserved),
+            EventSeat.seat_id.in_(seat_ids),
+        )
+        logger.debug("Reserve event_seats with ids: %s", seat_ids)
 
         payment_data, protection_data = await asyncio.gather(
             self.payment_connector.calculate(
