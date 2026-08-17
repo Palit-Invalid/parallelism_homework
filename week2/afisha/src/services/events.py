@@ -4,9 +4,11 @@ from datetime import datetime, timezone
 from src.domain.exceptions import SeatsNotAvailable
 from src.infrastracture.api_connectors.payment import PaymentConnector
 from src.infrastracture.api_connectors.protection import ProtectionConnector
+from src.infrastracture.db.event_view import EventViewCounter
 from src.infrastracture.db.manager import DBManager
 from src.infrastracture.db.models import Booking, Event, EventSeat, Seat
 from src.infrastracture.redis.manager import RedisManager
+from src.infrastracture.tasks.tasks import get_protection_after_fail
 from src.log import logger
 from src.schemas.base import (
     CheckoutBooking,
@@ -23,7 +25,6 @@ from src.schemas.bookings import (
 from src.schemas.events import EventRead, EventSeatEdit, SeatStatus
 from src.schemas.seats import SeatRead
 from src.services.base import BaseService
-from src.infrastracture.db.event_view import EventViewCounter
 
 
 class EventsService(BaseService):
@@ -33,7 +34,7 @@ class EventsService(BaseService):
         redis: RedisManager,
         payment_connector: PaymentConnector,
         protection_connector: ProtectionConnector,
-        event_view_counter: EventViewCounter
+        event_view_counter: EventViewCounter,
     ) -> None:
         self.db = db
         self.redis = redis
@@ -108,12 +109,6 @@ class EventsService(BaseService):
         if len(seat_ids) != len(event_seats):
             raise SeatsNotAvailable
 
-        await self.db.event_seats.edit(
-            EventSeatEdit(status=SeatStatus.reserved),
-            EventSeat.seat_id.in_(seat_ids),
-        )
-        logger.debug("Reserve event_seats with ids: %s", seat_ids)
-
         # Create dummy booking to get its ID
         booking_data = BookingCreateDB(
             event_id=event_id,
@@ -125,6 +120,12 @@ class EventsService(BaseService):
             reserved_until=datetime.now(tz=timezone.utc),
         )
         booking = await self.db.bookings.add_one(data=booking_data)
+
+        await self.db.event_seats.edit(
+            EventSeatEdit(booking_id=booking.id, status=SeatStatus.reserved),
+            EventSeat.seat_id.in_(seat_ids),
+        )
+        logger.debug("Reserve event_seats with ids: %s", seat_ids)
 
         payment_data, protection_data = await asyncio.gather(
             self.payment_connector.calculate(
@@ -171,6 +172,14 @@ class EventsService(BaseService):
         )
         await self.db.bookings.edit(data, Booking.id == booking.id)
         await self.db.commit()
+
+        # Calculate protection after commit because worker might not found booking
+        if not with_protection:
+            await get_protection_after_fail.kiq(
+                booking_id=booking.id,
+                ticket_amount=event.base_price,
+                event_category=event.category,
+            )
 
         return CheckoutResponse(
             booking=CheckoutBooking(

@@ -36,5 +36,3 @@ async def prepare_checkout(
     """Временно бронирует места за клиентом, возвращает итоговую стоимость
     и возможность страховки."""
     return await events_service.prepare_checkout(user_id=user_id, event_id=event_id, seat_ids=payload.seat_ids)
-    # TODO: создать бронь для выбранных мест через SELECT FOR UPDATE, и посчитать базовую стоимость.
-    # TODO: конкурентно запросить Payment API и Protection API для расчета checkout.

@@ -50,6 +50,16 @@ class BaseRepository[
             raise ObjectNotFound
         return self.schema.model_validate(model, from_attributes=True)
 
+    async def get_one_or_none(self, *filter, for_update: bool = False) -> ReadModelT | None:
+        query = select(self.model).filter(*filter)
+        if for_update:
+            query = query.with_for_update()
+        result = await self.session.execute(query)
+        model = result.scalar_one_or_none()
+        if not model:
+            return None
+        return self.schema.model_validate(model, from_attributes=True)
+
     async def get_filtered(self, *filter, for_update: bool = False) -> list[ReadModelT]:
         query = select(self.model).filter(*filter)
         if for_update:

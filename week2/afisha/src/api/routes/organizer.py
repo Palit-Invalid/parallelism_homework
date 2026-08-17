@@ -1,11 +1,9 @@
 from fastapi import APIRouter
 
-from src.api.dependencies import CurrentUserId
-from src.schemas.events import EventCreate, EventRead
+from src.api.dependencies import CurrentUserId, OrganizerServiceDep
+from src.infrastracture.tasks.tasks import task_generate_event_dashboard_pdf
 from src.schemas.base import EventDashboard
-
-from src.api.dependencies import OrganizerServiceDep
-
+from src.schemas.events import EventCreate, EventRead
 
 router = APIRouter(prefix="/organizer")
 
@@ -27,6 +25,6 @@ async def get_event_dashboard(
     event_id: int, organizer_id: CurrentUserId, organizer_service: OrganizerServiceDep
 ) -> EventDashboard:
     """Возвращает аналитические данные для дашборда по мероприятию."""
-    # TODO: проверить, что мероприятие принадлежит organizer_id.
-    # TODO: конкурентно загрузить аналитику продаж и занятость мест отдельными запросами к БД.
-    return await organizer_service.get_dashboard(event_id=event_id, organizer_id=organizer_id)
+    dashboard = await organizer_service.get_dashboard(event_id=event_id, organizer_id=organizer_id)
+    await task_generate_event_dashboard_pdf.kiq(dashboard=dashboard)
+    return dashboard
