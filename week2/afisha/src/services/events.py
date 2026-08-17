@@ -152,12 +152,6 @@ class EventsService(BaseService):
             protection_price = 0
             with_protection = False
             protection = None
-
-            await get_protection_after_fail.kiq(
-                booking_id=booking.id,
-                ticket_amount=event.base_price,
-                event_category=event.category,
-            )
         else:
             protection_price = protection_data.price
             with_protection = True
@@ -178,6 +172,14 @@ class EventsService(BaseService):
         )
         await self.db.bookings.edit(data, Booking.id == booking.id)
         await self.db.commit()
+
+        # Calculate protection after commit because worker might not found booking
+        if not with_protection:
+            await get_protection_after_fail.kiq(
+                booking_id=booking.id,
+                ticket_amount=event.base_price,
+                event_category=event.category,
+            )
 
         return CheckoutResponse(
             booking=CheckoutBooking(
