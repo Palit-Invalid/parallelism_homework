@@ -59,7 +59,8 @@ class BookingService(BaseService):
             BookingEditDB(
                 protection_price=protection_data.price,
                 with_protection=True,
-            )
+            ),
+            Booking.id == booking_id,
         )
 
         await self.db.commit()
