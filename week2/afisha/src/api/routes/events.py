@@ -9,7 +9,7 @@ router = APIRouter(prefix="/events")
 
 
 @router.get("")
-async def list_events() -> list[EventRead]:
+async def list_events() -> list[EventRead]:  # ty: ignore
     """Возвращает список мероприятий для клиента."""
 
 
@@ -20,9 +20,8 @@ async def get_event(event_service: EventsServiceDep, event_id: int, user_address
 
 
 @router.get("/{event_id}/seats")
-async def list_event_seats(events_service: EventsServiceDep, event_id: int) -> list[EventSeatRead]:
+async def list_event_seats(events_service: EventsServiceDep, event_id: int) -> list[EventSeatRead]:  # ty: ignore
     """Возвращает места на мероприятии с ценами и статусами."""
-    return await events_service.get_seats(event_id=event_id)
 
 
 @router.post("/{event_id}/checkout")

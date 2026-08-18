@@ -23,7 +23,7 @@ class BaseRepository[
         stmt = insert(self.model).values(**data.model_dump()).returning(self.model)
         result = await self.session.execute(stmt)
         model = result.scalar_one()
-        return self.schema.model_validate(model, from_attributes=True)
+        return self.schema.model_validate(model, from_attributes=True)  # ty: ignore
 
     async def add_bulk(self, data: list[CreateModelT]):
         stmt = insert(self.model).values([item.model_dump() for item in data])
@@ -48,7 +48,7 @@ class BaseRepository[
             model = result.scalar_one()
         except NoResultFound:
             raise ObjectNotFound
-        return self.schema.model_validate(model, from_attributes=True)
+        return self.schema.model_validate(model, from_attributes=True)  # ty: ignore
 
     async def get_one_or_none(self, *filter, for_update: bool = False) -> ReadModelT | None:
         query = select(self.model).filter(*filter)
@@ -58,7 +58,7 @@ class BaseRepository[
         model = result.scalar_one_or_none()
         if not model:
             return None
-        return self.schema.model_validate(model, from_attributes=True)
+        return self.schema.model_validate(model, from_attributes=True)  # ty: ignore
 
     async def get_filtered(self, *filter, for_update: bool = False) -> list[ReadModelT]:
         query = select(self.model).filter(*filter)
@@ -75,4 +75,4 @@ class BaseRepository[
                 raise ObjectLockedError
 
         models = result.scalars().all()
-        return [self.schema.model_validate(model, from_attributes=True) for model in models]
+        return [self.schema.model_validate(model, from_attributes=True) for model in models]  # ty: ignore

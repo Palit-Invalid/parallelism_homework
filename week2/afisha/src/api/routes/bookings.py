@@ -14,6 +14,6 @@ async def pay_booking(
     booking_id: int,
     payload: PaymentCreate,
     user_id: CurrentUserId,
-) -> PaymentCompleted:
+) -> PaymentCompleted:  # ty: ignore
     """Принимает способ оплаты и флаг with_protection."""
     ...

@@ -117,7 +117,7 @@ class EventsService(BaseService):
             payment_commission=0,
             with_protection=False,
             status=BookingStatus.pending_payment,
-            reserved_until=datetime.now(tz=timezone.UTC),
+            reserved_until=datetime.now(tz=timezone.utc),
         )
         booking = await self.db.bookings.add_one(data=booking_data)
 
