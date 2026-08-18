@@ -13,9 +13,8 @@ runs:
       uses: astral-sh/setup-uv@v6
       with:
         version: latest
-        working-directory: week2/afisha
         activate-environment: true
 
     - name: Installing dependencies
       shell: bash
-      run: uv sync --all-groups
+      run: cd week2/afisha && uv sync --all-groups
