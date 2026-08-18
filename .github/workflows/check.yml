@@ -24,9 +24,9 @@ jobs:
         uses: ./.github/python
 
       - name: Ruff linting
-        run: ruff check
+        run: uv run ruff check
         working-directory: ./week2/afisha
 
       - name: Ruff formatting
-        run: ruff format --check
+        run: uv run ruff format --check
         working-directory: ./week2/afisha
