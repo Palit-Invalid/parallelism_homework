@@ -1,50 +1,128 @@
+x-afisha-depends-on: &afisha-depends-on
+  db:
+    condition: service_healthy
+  payment:
+    condition: service_healthy
+  protection:
+    condition: service_healthy
+  redis:
+    condition: service_healthy
+  afisha-migrations:
+    condition: service_completed_successfully
+
+x-afisha-environment: &afisha-environment
+  db__host: db
+  db__port: 5432
+  db__user: $DB_USER
+  db__password: $DB_PASS
+  db__database: $DB_NAME
+  PAYMENT_API_URL: http://payment:8000
+  PROTECTION_API_URL: http://protection:9002
+  REDIS_URL: redis://redis:6379/0
+
 services:
   db:
-    image: postgres:17-alpine
+    image: postgres:18-trixie
     environment:
-      POSTGRES_DB: postgres
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: $DB_NAME
+      POSTGRES_USER: $DB_USER
+      POSTGRES_PASSWORD: $DB_PASS
     ports:
-      - "7432:5432"
+      - 7432:5432
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/18/docker
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $DB_USER -d $DB_NAME"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
-  payment-api:
+  payment:
     build: ./mock_apis/payment
     ports:
-      - "9001:9001"
+      - $PAYMENT_API_PORT:8000
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -f http://localhost:8000/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
-  protection-api:
+  protection:
     build: ./mock_apis/protection
     ports:
-      - "9002:9002"
+      - $PROTECTION_API_PORT:8000
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -f http://localhost:8000/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   redis:
     image: redis:7-alpine
-    ports:
-      - "7379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 3s
       retries: 10
 
-  # app:
-  #   build: .
-  #   ports:
-  #     - "8000:8000"
-  #   volumes:
-  #     - .:/app
-  #   depends_on:
-  #     db:
-  #       condition: service_started
-  #     payment-api:
-  #       condition: service_started
-  #     protection-api:
-  #       condition: service_started
-  #     redis:
-  #       condition: service_healthy
+  afisha-migrations:
+    build: ./afisha
+    entrypoint: ["alembic", "upgrade", "head"]
+    restart: "no"
+    environment:
+      db__host: db
+      db__port: 5432
+      db__user: $DB_USER
+      db__password: $DB_PASS
+      db__database: $DB_NAME
+    depends_on:
+      db:
+        condition: service_healthy
+
+  afisha-scheduler:
+    build: ./afisha
+    entrypoint:
+      - taskiq
+      - scheduler
+      - src.infrastracture.tasks.app:scheduler
+      - src.infrastracture.tasks.tasks
+      - --log-level
+      - INFO
+    environment:
+      REDIS_URL: redis://redis:6379/0
+    depends_on: *afisha-depends-on
+
+  afisha-worker-sync:
+    build: ./afisha
+    entrypoint:
+      - taskiq
+      - worker
+      - src.infrastracture.tasks.app:broker_sync
+      - src.infrastracture.tasks.tasks
+    environment: *afisha-environment
+    depends_on: *afisha-depends-on
+
+  afisha-worker-async:
+    build: ./afisha
+    entrypoint:
+      - taskiq
+      - worker
+      - src.infrastracture.tasks.app:broker_async
+      - src.infrastracture.tasks.tasks
+    environment: *afisha-environment
+    depends_on: *afisha-depends-on
+
+  afisha:
+    build: ./afisha
+    environment: *afisha-environment
+    ports:
+      - $AFISHA_API_PORT:8000
+    depends_on: *afisha-depends-on
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -f http://localhost:8000/openapi.json"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
 volumes:
   postgres_data:

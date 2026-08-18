@@ -1,4 +1,4 @@
-from pydantic import SecretStr, BaseModel
+from pydantic import BaseModel, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
