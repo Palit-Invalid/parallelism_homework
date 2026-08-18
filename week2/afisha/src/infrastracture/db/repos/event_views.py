@@ -12,9 +12,6 @@ class EventViewsRepository(BaseRepository[EventViewRead, EventViewCreate, EventV
         values = [data.model_dump() for data in views_data]
         stmt = insert(self.model).values(values)
         stmt = stmt.on_conflict_do_update(
-            index_elements=["event_id"],
-            set_={
-                "views_count": EventView.views_count + stmt.excluded.views_count
-            }
+            index_elements=["event_id"], set_={"views_count": EventView.views_count + stmt.excluded.views_count}
         )
         await self.session.execute(stmt)
