@@ -1,0 +1,11 @@
+services:
+  afisha:
+    environment:
+      GRANIAN_RELOAD: true
+    volumes:
+      - ./afisha/src:/app/src:rw
+
+  afisha-migrations:
+    volumes:
+      - ./afisha/migrations:/app/migrations:rw
+      - ./afisha/alembic.ini:/app/alembic.ini:rw
