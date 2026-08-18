@@ -30,3 +30,7 @@ jobs:
       - name: Ruff formatting
         run: uv run ruff format --check
         working-directory: ./week2/afisha
+
+      - name: Check types
+        run: uv run ty check
+        working-directory: ./week2/afisha
