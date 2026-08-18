@@ -1,15 +1,51 @@
-FROM python:3.13-slim
+ARG WORKDIR=/app
 
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+FROM astral/uv:python3.13-trixie-slim AS builder
 
-WORKDIR /app
+ARG WORKDIR
+WORKDIR "$WORKDIR"
 
-COPY pyproject.toml ./
+ENV UV_COMPILE_BYTECODE=1
+ENV UV_LINK_MODE=copy
+ENV UV_NO_DEV=1
+ENV UV_PYTHON_DOWNLOADS=0
+ENV UV_LOCKED=1
+ENV UV_NO_INSTALL_PROJECT=1
 
-RUN uv sync --no-dev --no-install-project
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    uv sync
 
-COPY . .
 
-EXPOSE 9002
+FROM python:3.13-slim-trixie
 
-CMD ["uv", "run", "--no-sync", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "9002"]
+ARG WORKDIR
+WORKDIR "$WORKDIR"
+
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
+ARG UID=1000
+ARG GID=1000
+ARG USERNAME=app
+
+# Setup a non-root user
+RUN groupadd --system --gid $GID $USERNAME \
+    && useradd --system --gid $GID --uid $UID --create-home $USERNAME
+
+COPY --from=builder --chown=$USERNAME:$USERNAME $WORKDIR $WORKDIR
+ENV PATH="$WORKDIR/.venv/bin:$PATH"
+
+ENV GRANIAN_HOST=0.0.0.0
+ENV GRANIAN_PORT=8000
+ENV GRANIAN_INTERFACE=asgi
+ENV GRANIAN_LOOP=uvloop
+ENV GRANIAN_RELOAD=false
+ENV GRANIAN_WORKERS=1
+
+COPY main.py .
+
+USER $USERNAME
+
+ENTRYPOINT ["granian", "main:app"]
