@@ -17,4 +17,5 @@ runs:
 
     - name: Installing dependencies
       shell: bash
-      run: cd week2/afisha && uv sync --all-groups
+      run: uv sync --all-groups
+      working-directory: ./week2/afisha
