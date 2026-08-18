@@ -99,7 +99,8 @@ services:
       - worker
       - src.infrastracture.tasks.app:broker_sync
       - src.infrastracture.tasks.tasks
-    environment: *afisha-environment
+    environment:
+      <<: [*afisha-environment]
     depends_on: *afisha-depends-on
 
   afisha-worker-async:
@@ -109,12 +110,14 @@ services:
       - worker
       - src.infrastracture.tasks.app:broker_async
       - src.infrastracture.tasks.tasks
-    environment: *afisha-environment
+    environment:
+      <<: [*afisha-environment]
     depends_on: *afisha-depends-on
 
   afisha:
     build: ./afisha
-    environment: *afisha-environment
+    environment:
+      <<: [*afisha-environment]
     ports:
       - $AFISHA_API_PORT:8000
     depends_on: *afisha-depends-on
