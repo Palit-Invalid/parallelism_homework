@@ -8,17 +8,17 @@ from src.config import config as app_config
 from src.infrastracture.db.models import *  # noqa: F403
 
 config = context.config
-config.set_main_option("sqlalchemy.url", f"{app_config.db.url}?async_fallback=True")
+config.set_main_option("sqlalchemy.url", f"{app_config.DB.url}?async_fallback=True")
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-target_metadata = Base.metadata
+target_metadata = Base.metadata  # noqa: F405
 
 
 def run_migrations_offline() -> None:
     context.configure(
-        url=app_config.db.url,
+        url=app_config.DB.url,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},

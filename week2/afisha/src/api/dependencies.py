@@ -30,14 +30,14 @@ DBDep = Annotated[DBManager, Depends(get_db)]
 
 
 def get_payment_connector() -> PaymentConnector:
-    return PaymentConnector(base_url=config.PAYMENT_API_URL)
+    return PaymentConnector(base_url=config.PAYMENT.url)
 
 
 PaymentConnectorDep = Annotated[PaymentConnector, Depends(get_payment_connector)]
 
 
 def get_protection_connector() -> ProtectionConnector:
-    return ProtectionConnector(base_url=config.PROTECTION_API_URL)
+    return ProtectionConnector(base_url=config.PROTECTION.url)
 
 
 ProtectionConnectorDep = Annotated[ProtectionConnector, Depends(get_protection_connector)]
@@ -46,7 +46,7 @@ ProtectionConnectorDep = Annotated[ProtectionConnector, Depends(get_protection_c
 @cache
 def get_redis_manager() -> RedisManager:
     redis = Redis.from_url(
-        config.REDIS_URL,
+        config.REDIS.url,
         decode_responses=True,
     )
 

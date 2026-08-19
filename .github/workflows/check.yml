@@ -1,0 +1,36 @@
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  lint:
+    name: Check code quality
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      - name: Python init
+        uses: ./.github/python
+
+      - name: Ruff linting
+        run: uv run ruff check
+        working-directory: ./week2/afisha
+
+      - name: Ruff formatting
+        run: uv run ruff format --check
+        working-directory: ./week2/afisha
+
+      - name: Check types
+        run: uv run ty check
+        working-directory: ./week2/afisha

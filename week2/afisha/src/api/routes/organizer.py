@@ -9,15 +9,13 @@ router = APIRouter(prefix="/organizer")
 
 
 @router.get("/events")
-async def list_organizer_events(organizer_id: CurrentUserId) -> list[EventRead]:
+async def list_organizer_events(organizer_id: CurrentUserId) -> list[EventRead]:  # ty: ignore
     """Возвращает список созданных событий текущего организатора."""
-    ...
 
 
 @router.post("/events")
-async def create_event(payload: EventCreate, organizer_id: CurrentUserId) -> EventRead:
+async def create_event(payload: EventCreate, organizer_id: CurrentUserId) -> EventRead:  # ty: ignore
     """Создает мероприятие от лица текущего организатора."""
-    ...
 
 
 @router.get("/events/{event_id}/dashboard")

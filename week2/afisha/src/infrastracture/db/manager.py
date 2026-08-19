@@ -14,11 +14,11 @@ from src.infrastracture.db.repos import (
 )
 
 engine = create_async_engine(
-    config.db.url,
+    config.DB.url,
     pool_pre_ping=True,
-    echo=config.db.echo,
-    pool_size=config.db.pool_size,
-    max_overflow=config.db.max_overflow,
+    echo=config.DB.ECHO,
+    pool_size=config.DB.POOL_SIZE,
+    max_overflow=config.DB.MAX_OVERFLOW,
 )
 session_maker = async_sessionmaker(bind=engine, expire_on_commit=False)
 

@@ -1,0 +1,21 @@
+name: Reusable steps for initializing python
+description: Download and initialize python environment
+
+runs:
+  using: composite
+  steps:
+    - name: Setup python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v6
+      with:
+        version: latest
+        activate-environment: true
+
+    - name: Installing dependencies
+      shell: bash
+      run: uv sync --all-groups
+      working-directory: ./week2/afisha

@@ -23,9 +23,6 @@ FROM python:3.13-slim-trixie
 ARG WORKDIR
 WORKDIR "$WORKDIR"
 
-RUN apt-get update && apt-get install -y --no-install-recommends curl \
-    && rm -rf /var/lib/apt/lists/*
-
 ARG UID=1000
 ARG GID=1000
 ARG USERNAME=app
@@ -37,6 +34,10 @@ RUN groupadd --system --gid $GID $USERNAME \
 COPY --from=builder --chown=$USERNAME:$USERNAME $WORKDIR $WORKDIR
 ENV PATH="$WORKDIR/.venv/bin:$PATH"
 
+COPY src src
+COPY migrations migrations
+COPY alembic.ini .
+
 ENV GRANIAN_HOST=0.0.0.0
 ENV GRANIAN_PORT=8000
 ENV GRANIAN_INTERFACE=asgi
@@ -44,8 +45,8 @@ ENV GRANIAN_LOOP=uvloop
 ENV GRANIAN_RELOAD=false
 ENV GRANIAN_WORKERS=1
 
-COPY main.py .
+ENV PATH="$WORKDIR/.venv/bin:$PATH"
 
 USER $USERNAME
 
-ENTRYPOINT ["granian", "main:app"]
+ENTRYPOINT ["granian", "src.main:app"]

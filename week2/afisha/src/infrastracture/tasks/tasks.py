@@ -34,7 +34,7 @@ async def delete_overdue_bookings():
     async with DBManager(session_maker=session_maker) as db:
         await BookingService(
             db=db,
-            protection_connector=ProtectionConnector(base_url=config.PROTECTION_API_URL),
+            protection_connector=ProtectionConnector(base_url=config.PROTECTION.url),
         ).delete_overdue_bookings()
 
 
@@ -45,5 +45,5 @@ async def get_protection_after_fail(booking_id: int, ticket_amount: int, event_c
     async with DBManager(session_maker=session_maker) as db:
         await BookingService(
             db=db,
-            protection_connector=ProtectionConnector(base_url=config.PROTECTION_API_URL),
+            protection_connector=ProtectionConnector(base_url=config.PROTECTION.url),
         ).add_protection(booking_id=booking_id, ticket_amount=ticket_amount, event_category=event_category)

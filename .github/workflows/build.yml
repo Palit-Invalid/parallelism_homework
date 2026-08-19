@@ -1,0 +1,41 @@
+on:
+  pull_request:
+
+jobs:
+  build:
+    name: Build docker image
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service:
+          - name: afisha
+            context: week2/afisha
+          - name: payment
+            context: week2/mock_apis/payment
+          - name: protection
+            context: week2/mock_apis/protection
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ matrix.service.name }}
+          tags: |
+            type=semver,pattern={{version}}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.service.context }}
+          push: false
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
