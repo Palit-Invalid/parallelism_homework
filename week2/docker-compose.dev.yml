@@ -1,4 +1,20 @@
 services:
+  db:
+    ports:
+      - 7432:5432
+
+  payment:
+    ports:
+      - 9001:8000
+
+  protection:
+    ports:
+      - 9002:8000
+
+  redis:
+    ports:
+      - 7379:6379
+
   afisha:
     environment:
       GRANIAN_RELOAD: true

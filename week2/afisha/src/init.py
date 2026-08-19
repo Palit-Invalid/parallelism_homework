@@ -5,7 +5,7 @@ from src.infrastracture.redis.manager import RedisManager
 
 redis_manager = RedisManager(
     Redis.from_url(
-        config.REDIS_URL,
+        config.REDIS.url,
         decode_responses=True,
     )
 )
