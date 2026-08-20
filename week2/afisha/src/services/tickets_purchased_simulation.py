@@ -22,6 +22,7 @@ class TicketsPurchasedSimulationService:
         self._config = config
         self._broker = broker
         self._publish_concurrency = 100
+        self._task = None
 
     async def start(self) -> None:
         async def _start():
@@ -29,7 +30,11 @@ class TicketsPurchasedSimulationService:
                 await self.run_simulation()
                 await asyncio.sleep(10)
 
-        asyncio.create_task(_start())
+        self._task = asyncio.create_task(_start())
+
+    async def stop(self) -> None:
+        if self._task is not None:
+            self._task.cancel()
 
     async def run_simulation(self) -> None:
         payloads = [

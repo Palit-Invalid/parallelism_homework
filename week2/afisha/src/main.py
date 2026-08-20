@@ -45,6 +45,7 @@ async def lifespan(app: FastAPI):
 
         await app.state.event_views_counter.stop()
         await app.state.kafka_broker.stop()
+        await app.state.tickets_purchased_simulation.stop()
 
 
 app = FastAPI(
