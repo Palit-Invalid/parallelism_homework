@@ -7,15 +7,32 @@ x-afisha-depends-on: &afisha-depends-on
     condition: service_healthy
   redis:
     condition: service_healthy
+  kafka:
+    condition: service_healthy
   afisha-migrations:
     condition: service_completed_successfully
 
-x-db-environment: &db-environment
+x-purchased_tickets-depends-on: &purchased_tickets-depends-on
+  kafka:
+    condition: service_healthy
+  afisha:
+    condition: service_healthy
+  purchased_tickets-migration:
+    condition: service_completed_successfully
+
+x-afisha-db-environment: &afisha-db-environment
   DB__HOST: db
   DB__PORT: 5432
-  DB__USER: $DB_USER
-  DB__PASS: $DB_PASS
-  DB__NAME: $DB_NAME
+  DB__USER: $AFISHA_DB_USER
+  DB__PASS: $AFISHA_DB_PASS
+  DB__NAME: $AFISHA_DB_NAME
+
+x-purchased_tickets-db-environment: &purchased_tickets-db-environment
+  DB__HOST: db
+  DB__PORT: 5432
+  DB__USER: $PURCHASED_TICKETS_DB_USER
+  DB__PASS: $PURCHASED_TICKETS_DB_PASS
+  DB__NAME: $PURCHASED_TICKETS_DB_NAME
 
 x-redis-environment: &redis-environment
   REDIS__HOST: redis
@@ -32,6 +49,15 @@ x-protection-environment: &protection-environment
   PROTECTION__PROTO: http
   PROTECTION__PORT: 8000
 
+x-afisha-kafka-environment: &afisha-kafka-environment
+  KAFKA__BOOTSTRAP_SERVERS: kafka:9091
+  KAFKA__TICKETS_TOPIC: tickets.purchased
+
+x-purchased_tickets-kafka-environment: &purchased_tickets-kafka-environment
+  KAFKA__BOOTSTRAP_SERVERS: kafka:9091
+  KAFKA__TICKETS_TOPIC: tickets.purchased
+  KAFKA__GROUP_ID: tickets.purchased
+
 services:
   db:
     image: postgres:18-trixie
@@ -39,8 +65,15 @@ services:
       POSTGRES_DB: $DB_NAME
       POSTGRES_USER: $DB_USER
       POSTGRES_PASSWORD: $DB_PASS
+      AFISHA_DB_NAME: $AFISHA_DB_NAME
+      AFISHA_DB_USER: $AFISHA_DB_USER
+      AFISHA_DB_PASS: $AFISHA_DB_PASS
+      PURCHASED_TICKETS_DB_NAME: $PURCHASED_TICKETS_DB_NAME
+      PURCHASED_TICKETS_DB_USER: $PURCHASED_TICKETS_DB_USER
+      PURCHASED_TICKETS_DB_PASS: $PURCHASED_TICKETS_DB_PASS
     volumes:
       - postgres_data:/var/lib/postgresql/18/docker
+      - ./postgres:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $DB_USER -d $DB_NAME"]
       interval: 5s
@@ -71,12 +104,50 @@ services:
       timeout: 3s
       retries: 10
 
+  kafka:
+    image: apache/kafka:4.3.1
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,CONTROLLER://localhost:9093,EXTERNAL://:9092,INTERNAL://:9091
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,EXTERNAL://localhost:9092,INTERNAL://kafka:9091
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT,INTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    healthcheck:
+      test: /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:29092 --list
+      interval: 15s
+      timeout: 10s
+      retries: 3
+
+  kafka-init:
+    image: apache/kafka:4.3.1
+    depends_on:
+      kafka:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic tickets.purchased --partitions 2 --replication-factor 1
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:v0.7.2
+    environment:
+      KAFKA_CLUSTERS_0_NAME: afisha
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+    ports:
+      - 8080:8080
+    depends_on:
+      kafka:
+        condition: service_healthy
+
   afisha-migrations:
     build: ./afisha
     entrypoint: ["alembic", "upgrade", "head"]
     restart: "no"
     environment:
-      <<: [*db-environment]
+      <<: [*afisha-db-environment]
     depends_on:
       db:
         condition: service_healthy
@@ -102,7 +173,7 @@ services:
       - src.infrastracture.tasks.app:broker_sync
       - src.infrastracture.tasks.tasks
     environment:
-      <<: [*db-environment, *redis-environment, *payment-environment, *protection-environment]
+      <<: [*afisha-db-environment, *redis-environment, *payment-environment, *protection-environment, *afisha-kafka-environment]
     depends_on: *afisha-depends-on
 
   afisha-worker-async:
@@ -113,16 +184,39 @@ services:
       - src.infrastracture.tasks.app:broker_async
       - src.infrastracture.tasks.tasks
     environment:
-      <<: [*db-environment, *redis-environment, *payment-environment, *protection-environment]
+      <<: [*afisha-db-environment, *redis-environment, *payment-environment, *protection-environment, *afisha-kafka-environment]
     depends_on: *afisha-depends-on
 
   afisha:
     build: ./afisha
     environment:
-      <<: [*db-environment, *redis-environment, *payment-environment, *protection-environment]
+      <<: [*afisha-db-environment, *redis-environment, *payment-environment, *protection-environment, *afisha-kafka-environment]
     ports:
       - 9000:8000
     depends_on: *afisha-depends-on
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -f http://localhost:8000/openapi.json"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  purchased_tickets-migration:
+    build: ./purchased_tickets
+    entrypoint: ["alembic", "upgrade", "head"]
+    restart: "no"
+    environment:
+      <<: [*purchased_tickets-db-environment]
+    depends_on:
+      db:
+        condition: service_healthy
+
+  purchased_tickets:
+    build: ./purchased_tickets
+    environment:
+      <<: [*purchased_tickets-db-environment, *purchased_tickets-kafka-environment]
+    ports:
+      - 9003:8000
+    depends_on: *purchased_tickets-depends-on
     healthcheck:
       test: ["CMD-SHELL", "curl -s -f http://localhost:8000/openapi.json"]
       interval: 5s

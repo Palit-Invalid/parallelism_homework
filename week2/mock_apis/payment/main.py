@@ -1,6 +1,6 @@
 import asyncio
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
@@ -42,14 +42,16 @@ async def calculate(payload: PaymentCalculation) -> dict:
         request_number = calculation_counter
 
     if request_number % 6 == 0:
-        raise HTTPException(status_code=429, detail="Слишком много запросов на расчет платежа")
+        raise HTTPException(
+            status_code=429, detail="Слишком много запросов на расчет платежа"
+        )
 
     commission = max(round(payload.amount * 0.03), 30)
     return {
         "commission": commission,
         "total": payload.amount + commission,
         "payment_methods": ["bank_card", "sbp"],
-        "expires_at": (datetime.now(timezone.utc) + timedelta(minutes=5)).isoformat(),
+        "expires_at": (datetime.now(UTC) + timedelta(minutes=5)).isoformat(),
     }
 
 

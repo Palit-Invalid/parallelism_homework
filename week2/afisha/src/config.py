@@ -7,9 +7,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class DatabaseConfig(BaseModel):
     HOST: str = "localhost"
     PORT: int = 7432
-    USER: str = "postgres"
-    PASS: SecretStr = SecretStr("postgres")
-    NAME: str = "postgres"
+    USER: str = "afisha"
+    PASS: SecretStr = SecretStr("afisha")
+    NAME: str = "afisha"
 
     ECHO: bool = False
     POOL_SIZE: int = 10
@@ -44,6 +44,11 @@ class ProtectionConfig(PaymentConfig):
     PORT: int = 9002
 
 
+class KafkaConfig(BaseModel):
+    BOOTSTRAP_SERVERS: str = "localhost:9092"
+    TICKETS_TOPIC: str = "tickets.purchased"
+
+
 class Config(BaseSettings):
     BOOKING_TTL_MINUTES: int = 15
 
@@ -51,6 +56,7 @@ class Config(BaseSettings):
     REDIS: RedisConfig = RedisConfig()
     PAYMENT: PaymentConfig = PaymentConfig()
     PROTECTION: ProtectionConfig = ProtectionConfig()
+    KAFKA: KafkaConfig = KafkaConfig()
 
     model_config = SettingsConfigDict(
         env_file=".env",
