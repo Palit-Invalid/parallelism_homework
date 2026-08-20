@@ -49,5 +49,5 @@ async def send_messages_to_client(client: WebsocketClient):
                 client.ws.send_json(message.model_dump_json()),
                 timeout=2,
             )
-        except Exception as ex:
-            logger.error("Unexpected error on sending message to client: %s", ex)
+        except TimeoutError as ex:
+            logger.error("WebSocket send timeout after 2s: %s", ex)

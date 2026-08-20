@@ -76,7 +76,7 @@ class BaseRepository[
             result = await self.session.execute(query)
         except DBAPIError as exc:
             if not exc.orig:
-                raise exc
+                raise
             if isinstance(exc.orig.__cause__, LockNotAvailableError):
                 logger.debug("Unable to get data from database because its locked")
                 raise ObjectLockedError
