@@ -1,3 +1,4 @@
+import asyncio
 import secrets
 from datetime import datetime
 from random import randint
@@ -22,6 +23,14 @@ class TicketsPurchasedSimulationService:
         self._broker = broker
         self._publish_concurrency = 100
 
+    async def start(self) -> None:
+        async def _start():
+            while True:
+                await self.run_simulation()
+                await asyncio.sleep(10)
+
+        asyncio.create_task(_start())
+
     async def run_simulation(self) -> None:
         payloads = [
             TicketPurchasedMessage(
@@ -31,6 +40,7 @@ class TicketsPurchasedSimulationService:
                 total_amount=randint(1000, 10000),
                 paid_at=datetime.now(),
             )
+            for _ in range(5)
         ]
         await self._publish_payloads(payloads=payloads)
 

@@ -102,10 +102,7 @@ UserAddressDep = Annotated[str | None, Depends(get_user_address)]
 
 @functools.cache
 def get_tickets_purchased_simulation_service(request: Request) -> TicketsPurchasedSimulationService:
-    return TicketsPurchasedSimulationService(
-        config=config.KAFKA,
-        broker=request.app.state.kafka_broker,
-    )
+    return request.app.state.tickets_purchased_simulation
 
 
 TicketsPurchasedSimulationServiceDep = Annotated[

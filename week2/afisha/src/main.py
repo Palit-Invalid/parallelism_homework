@@ -17,6 +17,7 @@ from src.config import config
 from src.infrastracture.db.event_view import EventViewCounter
 from src.infrastracture.db.manager import DBManager, session_maker
 from src.init import redis_manager
+from src.services.tickets_purchased_simulation import TicketsPurchasedSimulationService
 
 
 @asynccontextmanager
@@ -32,6 +33,13 @@ async def lifespan(app: FastAPI):
             linger_ms=50,
         )
         await app.state.kafka_broker.start()
+
+        app.state.tickets_purchased_simulation = TicketsPurchasedSimulationService(
+            config=config.KAFKA,
+            broker=app.state.kafka_broker,
+        )
+
+        await app.state.tickets_purchased_simulation.start()
 
         yield
 
