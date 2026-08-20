@@ -15,6 +15,10 @@ services:
     ports:
       - 7379:6379
 
+  kafka:
+    ports:
+      - 9092:9092
+
   afisha:
     environment:
       GRANIAN_RELOAD: true
