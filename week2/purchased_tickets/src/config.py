@@ -39,4 +39,5 @@ class Config(BaseSettings):
         extra="ignore",
     )
 
+
 config = Config()
