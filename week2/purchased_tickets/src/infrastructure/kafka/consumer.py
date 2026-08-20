@@ -19,7 +19,7 @@ def create_kafka_broker(config: KafkaConfig, container: AsyncContainer):
         group_id=config.GROUP_ID,
         auto_offset_reset="earliest",
         ack_policy=AckPolicy.NACK_ON_ERROR,
-        max_records=200,
+        max_records=10,
         batch_timeout_ms=500,
     )
     async def process_gps_events(messages: list[TicketPurchasedEvent]):
