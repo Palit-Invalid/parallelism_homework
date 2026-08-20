@@ -1,0 +1,25 @@
+[project]
+name = "purchased-tickets"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Dmitry Fateev", email = "dimkaaaa1@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "alembic>=1.19.1",
+    "asyncpg>=0.31.0",
+    "dishka>=1.10.1",
+    "fastapi>=0.141.1",
+    "faststream[kafka]>=0.7.4",
+    "granian[reload,uvloop]>=2.8.1",
+    "pydantic-settings>=2.15.0",
+    "sqlalchemy>=2.0.52",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.16.3",
+    "ty>=0.0.73",
+]
