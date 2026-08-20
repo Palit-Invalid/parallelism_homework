@@ -7,9 +7,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class DatabaseConfig(BaseModel):
     HOST: str = "localhost"
     PORT: int = 7432
-    USER: str = "postgres"
-    PASS: SecretStr = SecretStr("postgres")
-    NAME: str = "postgres"
+    USER: str = "afisha"
+    PASS: SecretStr = SecretStr("afisha")
+    NAME: str = "afisha"
 
     ECHO: bool = False
     POOL_SIZE: int = 10
