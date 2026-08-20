@@ -10,12 +10,12 @@ x-afisha-depends-on: &afisha-depends-on
   afisha-migrations:
     condition: service_completed_successfully
 
-x-db-environment: &db-environment
+x-afisha-db-environment: &afisha-db-environment
   DB__HOST: db
   DB__PORT: 5432
-  DB__USER: $DB_USER
-  DB__PASS: $DB_PASS
-  DB__NAME: $DB_NAME
+  DB__USER: $AFISHA_DB_USER
+  DB__PASS: $AFISHA_DB_PASS
+  DB__NAME: $AFISHA_DB_NAME
 
 x-redis-environment: &redis-environment
   REDIS__HOST: redis
@@ -43,8 +43,15 @@ services:
       POSTGRES_DB: $DB_NAME
       POSTGRES_USER: $DB_USER
       POSTGRES_PASSWORD: $DB_PASS
+      AFISHA_DB_NAME: $AFISHA_DB_NAME
+      AFISHA_DB_USER: $AFISHA_DB_USER
+      AFISHA_DB_PASS: $AFISHA_DB_PASS
+      PURCHASED_TICKETS_DB_NAME: $PURCHASED_TICKETS_DB_NAME
+      PURCHASED_TICKETS_DB_USER: $PURCHASED_TICKETS_DB_USER
+      PURCHASED_TICKETS_DB_PASS: $PURCHASED_TICKETS_DB_PASS
     volumes:
       - postgres_data:/var/lib/postgresql/18/docker
+      - ./postgres:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $DB_USER -d $DB_NAME"]
       interval: 5s
@@ -117,7 +124,7 @@ services:
     entrypoint: ["alembic", "upgrade", "head"]
     restart: "no"
     environment:
-      <<: [*db-environment]
+      <<: [*afisha-db-environment]
     depends_on:
       db:
         condition: service_healthy
@@ -143,7 +150,7 @@ services:
       - src.infrastracture.tasks.app:broker_sync
       - src.infrastracture.tasks.tasks
     environment:
-      <<: [*db-environment, *redis-environment, *payment-environment, *protection-environment, *kafka-environment]
+      <<: [*afisha-db-environment, *redis-environment, *payment-environment, *protection-environment, *kafka-environment]
     depends_on: *afisha-depends-on
 
   afisha-worker-async:
@@ -154,13 +161,13 @@ services:
       - src.infrastracture.tasks.app:broker_async
       - src.infrastracture.tasks.tasks
     environment:
-      <<: [*db-environment, *redis-environment, *payment-environment, *protection-environment, *kafka-environment]
+      <<: [*afisha-db-environment, *redis-environment, *payment-environment, *protection-environment, *kafka-environment]
     depends_on: *afisha-depends-on
 
   afisha:
     build: ./afisha
     environment:
-      <<: [*db-environment, *redis-environment, *payment-environment, *protection-environment, *kafka-environment]
+      <<: [*afisha-db-environment, *redis-environment, *payment-environment, *protection-environment, *kafka-environment]
     ports:
       - 9000:8000
     depends_on: *afisha-depends-on
