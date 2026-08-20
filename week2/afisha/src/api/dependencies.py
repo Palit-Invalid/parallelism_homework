@@ -1,3 +1,4 @@
+import functools
 from functools import cache
 from typing import Annotated
 
@@ -12,6 +13,7 @@ from src.infrastracture.db.manager import DBManager, session_maker
 from src.infrastracture.redis.manager import RedisManager
 from src.services.events import EventsService
 from src.services.organizers import OrganizerService
+from src.services.tickets_purchased_simulation import TicketsPurchasedSimulationService
 
 
 def get_current_user_id(x_user_id: Annotated[int, Header()]) -> int:
@@ -96,3 +98,16 @@ def get_user_address(request: Request) -> str | None:
 
 
 UserAddressDep = Annotated[str | None, Depends(get_user_address)]
+
+
+@functools.cache
+def get_tickets_purchased_simulation_service(request: Request) -> TicketsPurchasedSimulationService:
+    return TicketsPurchasedSimulationService(
+        config=config.KAFKA,
+        broker=request.app.state.kafka_broker,
+    )
+
+
+TicketsPurchasedSimulationServiceDep = Annotated[
+    TicketsPurchasedSimulationService, Depends(get_tickets_purchased_simulation_service)
+]

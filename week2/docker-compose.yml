@@ -32,6 +32,10 @@ x-protection-environment: &protection-environment
   PROTECTION__PROTO: http
   PROTECTION__PORT: 8000
 
+x-kafka-environment: &kafka-environment
+  KAFKA__BOOTSTRAP_SERVERS: kafka:9091
+  KAFKA__TICKETS_TOPIC: tickets.purchased
+
 services:
   db:
     image: postgres:18-trixie
@@ -139,7 +143,7 @@ services:
       - src.infrastracture.tasks.app:broker_sync
       - src.infrastracture.tasks.tasks
     environment:
-      <<: [*db-environment, *redis-environment, *payment-environment, *protection-environment]
+      <<: [*db-environment, *redis-environment, *payment-environment, *protection-environment, *kafka-environment]
     depends_on: *afisha-depends-on
 
   afisha-worker-async:
@@ -150,13 +154,13 @@ services:
       - src.infrastracture.tasks.app:broker_async
       - src.infrastracture.tasks.tasks
     environment:
-      <<: [*db-environment, *redis-environment, *payment-environment, *protection-environment]
+      <<: [*db-environment, *redis-environment, *payment-environment, *protection-environment, *kafka-environment]
     depends_on: *afisha-depends-on
 
   afisha:
     build: ./afisha
     environment:
-      <<: [*db-environment, *redis-environment, *payment-environment, *protection-environment]
+      <<: [*db-environment, *redis-environment, *payment-environment, *protection-environment, *kafka-environment]
     ports:
       - 9000:8000
     depends_on: *afisha-depends-on
