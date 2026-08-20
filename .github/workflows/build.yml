@@ -14,6 +14,8 @@ jobs:
             context: week2/mock_apis/payment
           - name: protection
             context: week2/mock_apis/protection
+          - name: purchased_tickets
+            context: week2/purchased_tickets
     steps:
       - name: Checkout
         uses: actions/checkout@v3
