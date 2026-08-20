@@ -43,7 +43,7 @@ async def calculate(payload: ProtectionCalculation) -> dict:
         await asyncio.sleep(10)
         raise HTTPException(status_code=503, detail="Protection service unavailable")
 
-    await asyncio.sleep(1.5 if success_number % 2 else 4)
+    await asyncio.sleep(1.5 if success_number % 2 else 4)  # ty: ignore
 
     unavailable_categories = {"free", "charity"}
     available = payload.event_category.lower() not in unavailable_categories
@@ -52,5 +52,7 @@ async def calculate(payload: ProtectionCalculation) -> dict:
         "available": available,
         "price": price,
         "covered_amount": payload.ticket_amount if available else 0,
-        "description": "Возврат стоимости билетов при страховом случае" if available else None,
+        "description": "Возврат стоимости билетов при страховом случае"
+        if available
+        else None,
     }
