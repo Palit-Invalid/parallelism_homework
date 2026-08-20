@@ -23,6 +23,9 @@ FROM python:3.13-slim-trixie
 ARG WORKDIR
 WORKDIR "$WORKDIR"
 
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
 ARG UID=1000
 ARG GID=1000
 ARG USERNAME=app
