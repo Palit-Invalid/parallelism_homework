@@ -16,6 +16,4 @@ class EventPaymentActivityModel(Base):
     payments_count: Mapped[int]
     tickets_count: Mapped[int]
     total_amount: Mapped[int]
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

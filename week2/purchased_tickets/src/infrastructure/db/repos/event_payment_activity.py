@@ -8,9 +8,7 @@ from src.schemas.event_payment_activity import (
 
 
 class EventPaymentActivityRepository(
-    BaseRepository[
-        EventPaymentActivityGet, EventPaymentActivityCreate, EventPaymentActivityEdit
-    ]
+    BaseRepository[EventPaymentActivityGet, EventPaymentActivityCreate, EventPaymentActivityEdit]
 ):
     model = EventPaymentActivityModel
     schema = EventPaymentActivityGet

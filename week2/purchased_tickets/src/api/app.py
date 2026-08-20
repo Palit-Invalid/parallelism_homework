@@ -8,9 +8,7 @@ from src.api.routes import main_router
 
 
 def create_app(container: AsyncContainer) -> FastAPI:
-    app = FastAPI(
-        title="Аналитика перемещения курьеров", lifespan=create_lifespan(container)
-    )
+    app = FastAPI(title="Аналитика перемещения курьеров", lifespan=create_lifespan(container))
     setup_dishka(container=container, app=app)
     setup_exception_handlers(app)
     app.include_router(main_router)

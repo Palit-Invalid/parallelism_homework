@@ -10,9 +10,7 @@ class PurchasedTicketsAggregationService:
     def __init__(self, db: DBManager) -> None:
         self.db = db
 
-    async def process(
-        self, messages: list[TicketPurchasedEvent]
-    ) -> list[EventPaymentActivityCreate]:
+    async def process(self, messages: list[TicketPurchasedEvent]) -> list[EventPaymentActivityCreate]:
         insert_data = self._aggregate(messages=messages)
 
         await self.db.event_payment_activity.add_bulk(insert_data)
@@ -20,9 +18,7 @@ class PurchasedTicketsAggregationService:
 
         return insert_data
 
-    def _aggregate(
-        self, messages: list[TicketPurchasedEvent]
-    ) -> list[EventPaymentActivityCreate]:
+    def _aggregate(self, messages: list[TicketPurchasedEvent]) -> list[EventPaymentActivityCreate]:
         aggregated_data: dict[int, EventPaymentActivityCreate] = {}
         batch_id = uuid4()
 

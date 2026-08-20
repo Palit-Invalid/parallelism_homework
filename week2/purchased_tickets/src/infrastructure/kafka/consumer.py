@@ -24,9 +24,7 @@ def create_kafka_broker(config: KafkaConfig, container: AsyncContainer):
     )
     async def process_gps_events(messages: list[TicketPurchasedEvent]):
         async with container(scope=Scope.REQUEST) as rq_container:
-            tracking_service = await rq_container.get(
-                PurchasedTicketsAggregationService
-            )
+            tracking_service = await rq_container.get(PurchasedTicketsAggregationService)
             events = await tracking_service.process(messages)
 
             broadcaster_service = await rq_container.get(WebsocketGPSBroadcaster)

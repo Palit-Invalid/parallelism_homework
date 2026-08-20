@@ -31,18 +31,14 @@ class BaseRepository[
         await self.session.execute(stmt)
 
     async def edit(self, data: EditModelT, *filter) -> int:
-        stmt = (
-            update(self.model)
-            .values(**data.model_dump(exclude_unset=True))
-            .filter(*filter)
-        )
+        stmt = update(self.model).values(**data.model_dump(exclude_unset=True)).filter(*filter)
         result = await self.session.execute(stmt)
-        return result.rowcount
+        return result.rowcount  # ty: ignore
 
     async def delete(self, *filter) -> int:
         stmt = delete(self.model).filter(*filter)
         result = await self.session.execute(stmt)
-        return result.rowcount
+        return result.rowcount  # ty: ignore
 
     async def get_one(self, *filter, for_update: bool = False) -> ReadModelT:
         query = select(self.model).filter(*filter)
@@ -55,9 +51,7 @@ class BaseRepository[
             raise ObjectNotFound
         return self.schema.model_validate(model, from_attributes=True)  # ty: ignore
 
-    async def get_one_or_none(
-        self, *filter, for_update: bool = False
-    ) -> ReadModelT | None:
+    async def get_one_or_none(self, *filter, for_update: bool = False) -> ReadModelT | None:
         query = select(self.model).filter(*filter)
         if for_update:
             query = query.with_for_update()
@@ -82,6 +76,4 @@ class BaseRepository[
                 raise ObjectLockedError
 
         models = result.scalars().all()
-        return [
-            self.schema.model_validate(model, from_attributes=True) for model in models
-        ]  # ty: ignore
+        return [self.schema.model_validate(model, from_attributes=True) for model in models]  # ty: ignore

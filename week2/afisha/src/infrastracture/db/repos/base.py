@@ -1,8 +1,9 @@
 from asyncpg import LockNotAvailableError
-from sqlalchemy.exc import DBAPIError, NoResultFound
 from pydantic import BaseModel
 from sqlalchemy import delete, insert, select, update
+from sqlalchemy.exc import DBAPIError, NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from src.domain.exceptions import ObjectLockedError, ObjectNotFound
 from src.infrastracture.db.models.base import Base
 from src.log import logger
